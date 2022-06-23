@@ -326,84 +326,84 @@ with DAG(
 
     t1 = BashOperator(
         task_id="t1_start_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t1_end = BashOperator(
         task_id="t1_end_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t2 = BashOperator(
         task_id="t2_start_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 2: transformation - counting words \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t2_end = BashOperator(
         task_id="t2_end_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 2: transformation - counting words \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t3 = BashOperator(
         task_id="t3_start_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 3: loading - counting words \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t3_end = BashOperator(
         task_id="t3_end_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 3: loading - counting words \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t4 = BashOperator(
         task_id="t4_start_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 4: loading - osm street images \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t4_end = BashOperator(
         task_id="t4_end_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 4: loading - osm street images \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t5 = BashOperator(
         task_id="t5_start_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 5: cleanup - deleting residuals \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     t5_end = BashOperator(
         task_id="t5_end_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 5: cleanup - deleting residuals \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     tdag_start = BashOperator(
         task_id="dag_start_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"DAG start running tasks. \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
 
     tdag_end = BashOperator(
         task_id="dag_end_msg",
-        bash_command = "echo t1_end",
+        bash_command = "echo 't1_end'",
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"DAG tasks completed. \"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
