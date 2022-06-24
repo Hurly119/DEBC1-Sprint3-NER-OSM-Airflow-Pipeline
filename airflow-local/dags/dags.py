@@ -131,24 +131,31 @@ def word_count(ds=None, **kwargs):
         return word_dict
 
 
-    files = os.listdir(DATA_PATH)
-    print(files)
-    for file in files:
-        outfile = f"{DATA_PATH}{file}"
-        if not outfile.endswith('.csv'):
-            continue
-        df = pd.read_csv(outfile)
+    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.CSV"
+    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.CSV"
+
+    game_articles = pd.read_csv(game_article_filename)
+    game_reviews = pd.read_csv(game_reviews_filename)
         ################################# TODO: IMPORTANT #########################################
         # you need to find the column where the text/content is located e.g. 'summary' or 'content'
         # and add a conditional logic below
         ###########################################################################################
-        df['sum_word_cnt'] = df['summary'].apply(lambda x: len(x.split()))
-        df['dict_word_cnt'] = df['summary'].apply(lambda x: word_count(x))
+    print(f"getting word_count for game articles...")
+    game_articles['sum_word_cnt'] = game_articles['summary'].apply(lambda x: len(x.split()))
+    game_articles['dict_word_cnt'] = game_articles['summary'].apply(lambda x: word_count(x))
         ###########################################################################################
 
-        df.to_csv(outfile, index=False)
-        print(df[['summary','sum_word_cnt', 'dict_word_cnt']])
+    game_articles.to_csv(game_article_filename, index=False)
+    print(f"word_count for game_articles collected!")
+    print()
 
+    print(f"getting word_count for game reviews...")
+    game_reviews['sum_word_cnt'] = game_reviews['review'].apply(lambda x: len(x.split()))
+    game_reviews['dict_word_cnt'] = game_reviews['review'].apply(lambda x: word_count(x))
+
+    game_reviews.to_csv(game_reviews_filename,index=False)
+    print(f"word_count for game reviews collected!")
+    print()
 @task(task_id='sentiment_analysis')
 def sentiment_analysis(ds=None,**kwargs):
     game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.CSV"
@@ -185,27 +192,26 @@ def spacy_ner(ds=None, **kwargs):
             print(entity.text, entity.label_)
         return ner
 
-    files = os.listdir(DATA_PATH)
-    for file in files:
-        outfile = f"{DATA_PATH}{file}"
-        if not outfile.endswith('.csv'):
-            continue
-        df = pd.read_csv(outfile)
+    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.CSV"
+    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.CSV"
 
+    game_articles = pd.read_csv(game_article_filename)
+    game_reviews = pd.read_csv(game_reviews_filename)
         ################################# TODO: IMPORTANT #########################################
         # you need to find the column where the text/content is located e.g. 'summary' or 'content'
         # and add a conditional logic below
         ###########################################################################################
-        if outfile.startswith(f'{DATA_PATH}business_world'):
-            df['NER'] = df['content'].apply(lambda x: ner(x))
-
-        else:
-            df['NER'] = df['summary'].apply(lambda x: ner(x))
-
+    print("getting NER for game articles...")
+    game_articles['NER'] = game_articles['summary'].apply(lambda x: ner(x))
+    game_articles.to_csv(game_article_filename,index=False)
+    print("getting NER for game articles complete!")
+    print()
         ###########################################################################################
-
-        df.to_csv(outfile, index=False)
-        print(df['NER'])
+    print("getting NER for game reviews...")
+    game_reviews["NER"] = game_reviews["review"].apply(lambda x: ner(x))
+    game_reviews.to_csv(game_reviews_filename)
+    print("getting NER for game reviews complete!")
+    print()
 
 with DAG(
     'scrapers_proj_test',
@@ -258,6 +264,15 @@ with DAG(
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
+        
+    t3_end = BashOperator(
+        task_id="t3_end_msg",
+        bash_command = "echo 't1_end'",
+        # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
+        dag=dag
+    )
 
-    t1 >> [escapist_mag_feed(),indigames_plus_feed()] >> combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
+    t1 >> [escapist_mag_feed(),indigames_plus_feed()] >> combine_all_articles() >> \
+    t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end \
+    >> [sentiment_analysis(),spacy_ner(),word_count()] >> t3_end
     # combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
