@@ -250,6 +250,18 @@ with DAG(
         # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
         dag=dag
     )
+    t13 = BashOperator(
+        task_id="t13_start_msg",
+        bash_command = "echo 't1_end'",
+        # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
+        dag=dag
+    )
+    t132 = BashOperator(
+        task_id="t132_start_msg",
+        bash_command = "echo 't1_end'",
+        # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"starting task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
+        dag=dag
+    )
 
     t1_end = BashOperator(
         task_id="t1_end_msg",
@@ -272,9 +284,9 @@ with DAG(
         dag=dag
     )
 
-    t1 >> [indigames_plus_feed(),kotaku_feed(),escapist_mag_feed(),
-    eurogamer_feed(),ps_blog_feed(),gamespot_feed(),steam_news_feed(),rock_paper_sg_feed(),
-    ancient_gaming_feed()] >> combine_all_articles() >> \
-    t1_end >> [scrape_game_details(),scrape_game_reviews()] \
+    t1 >> [indigames_plus_feed(),kotaku_feed(), escapist_mag_feed()] >> t13 \
+    >> [eurogamer_feed(),ps_blog_feed(),gamespot_feed()] >> t132 \
+    >> [steam_news_feed(),rock_paper_sg_feed(),ancient_gaming_feed()] \
+    >> combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] \
     >> t2_end >> [sentiment_analysis(),spacy_ner(),word_count()] >> t3_end
     # combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
