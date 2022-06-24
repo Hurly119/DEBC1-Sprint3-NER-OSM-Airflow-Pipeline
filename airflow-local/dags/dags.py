@@ -26,7 +26,7 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from utils import upload_formatted_rss_feed,scrape_reviews,scrape_appdetails,get_unique_appids
+from utils import upload_formatted_rss_feed,scrape_reviews,scrape_appdetails,get_unique_appids,analyze_sentiment,label_polarity
 
 BUCKET_NAME = "news_sites"
 
@@ -37,6 +37,9 @@ DATE_NOW = datetime.now().strftime("%Y-%m-%d")
 # Data directory for CSVs and OSM Images
 DATA_PATH = '/opt/airflow/data/'
 
+#################################################################
+################### 1.) EXTRACT #################################
+#################################################################
 @task(task_id="kotaku")
 def kotaku_feed(ds=None, **kwargs):
     upload_formatted_rss_feed("kotaku","https://kotaku.com/rss")
@@ -78,7 +81,7 @@ def ancient_gaming_feed(ds=None, **kwargs):
 
 @task(task_id="combine_all_articles")
 def combine_all_articles(ds=None,**kwargs):
-    files = os.listdir(DATA_PATH)
+    files = os.listdir(f"{DATA_PATH}articles")
     dfs = []
     for file in files:
         outfile = f"{DATA_PATH}{file}"
@@ -110,10 +113,99 @@ def scrape_game_details(ds=None,**kwargs):
     
     lst_game_details = scrape_appdetails(appids)
     
-    game_details = pd.DataFrame(lst_game_details)
+    game_details = pd.DataFrame(lst_game_details).rename(columns={"appid":"appids"})
 
     game_details.to_csv(f"{DATA_PATH}game_details_{DATE_NOW}.csv")
 
+#################################################################
+################### 2.) TRANSFORM ###############################
+#################################################################
+
+@task(task_id="word_count")
+def word_count(ds=None, **kwargs):
+
+    def word_count(text):
+        words = text.split()
+        freq = [words.count(w) for w in words]
+        word_dict = dict(zip(words, freq))
+        return word_dict
+
+
+    files = os.listdir(DATA_PATH)
+    print(files)
+    for file in files:
+        outfile = f"{DATA_PATH}{file}"
+        if not outfile.endswith('.csv'):
+            continue
+        df = pd.read_csv(outfile)
+        ################################# TODO: IMPORTANT #########################################
+        # you need to find the column where the text/content is located e.g. 'summary' or 'content'
+        # and add a conditional logic below
+        ###########################################################################################
+        df['sum_word_cnt'] = df['summary'].apply(lambda x: len(x.split()))
+        df['dict_word_cnt'] = df['summary'].apply(lambda x: word_count(x))
+        ###########################################################################################
+
+        df.to_csv(outfile, index=False)
+        print(df[['summary','sum_word_cnt', 'dict_word_cnt']])
+
+@task(task_id='sentiment_analysis')
+def sentiment_analysis(ds=None,**kwargs):
+    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.CSV"
+    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.CSV"
+
+    game_articles = pd.read_csv(game_article_filename)
+    game_reviews = pd.read_csv(game_reviews_filename)
+
+    print("getting sentiment for articles...")
+    game_articles['polarity_score_summary'] = game_articles['summary'].apply(lambda x: analyze_sentiment(x))
+    game_articles["sentiment_summary"] = game_articles["polarity_score_summary"].apply(lambda x: label_polarity(x["compound"]))
+        
+    game_articles['polarity_score_title'] = game_articles['title'].apply(lambda x: analyze_sentiment(x))
+    game_articles["sentiment_title"] = game_articles["polarity_score_title"].apply(lambda x: label_polarity(x["compound"]))
+    game_articles.to_csv(game_article_filename, index=False)
+    print("sentiment for articles taken!")
+
+    print("getting sentiment for game reviews...")
+    game_reviews["sentiment"] = game_reviews["voted_up"].apply(lambda x: "positive" if x else "negative")
+    game_reviews.to_csv(game_reviews_filename,index=False)
+    print("sentiment for reviews taken!")
+# NER
+@task(task_id='spacy_ner')
+def spacy_ner(ds=None, **kwargs):
+    nlp = spacy.load("/model/en_core_web_sm/en_core_web_sm-3.3.0")
+    
+    def ner(text):
+        doc = nlp(text)
+        # print("Noun phrases:", [chunk.text for chunk in doc.noun_chunks])
+        # print("Verbs:", [token.lemma_ for token in doc if token.pos_ == "VERB"])
+        ner = {}
+        for entity in doc.ents:
+            ner[entity.text] = entity.label_
+            print(entity.text, entity.label_)
+        return ner
+
+    files = os.listdir(DATA_PATH)
+    for file in files:
+        outfile = f"{DATA_PATH}{file}"
+        if not outfile.endswith('.csv'):
+            continue
+        df = pd.read_csv(outfile)
+
+        ################################# TODO: IMPORTANT #########################################
+        # you need to find the column where the text/content is located e.g. 'summary' or 'content'
+        # and add a conditional logic below
+        ###########################################################################################
+        if outfile.startswith(f'{DATA_PATH}business_world'):
+            df['NER'] = df['content'].apply(lambda x: ner(x))
+
+        else:
+            df['NER'] = df['summary'].apply(lambda x: ner(x))
+
+        ###########################################################################################
+
+        df.to_csv(outfile, index=False)
+        print(df['NER'])
 
 with DAG(
     'scrapers_proj_test',
@@ -167,5 +259,5 @@ with DAG(
         dag=dag
     )
 
-    t1 >> [kotaku_feed(),indigames_plus_feed()] >> combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
+    t1 >> [escapist_mag_feed(),indigames_plus_feed()] >> combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
     # combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end

@@ -127,6 +127,8 @@ def get_nouns(title_summary):
 
 def upload_formatted_rss_feed(feed_name, feed):
     DATA_PATH = '/opt/airflow/data/'
+    if not os.path.exists(f"{DATA_PATH}articles"):
+        os.mkdir(f"{DATA_PATH}articles")
     feed = feedparser.parse(feed)
     df = pd.DataFrame(feed['entries'])
     columns = ["title","title_detail","link","links","author","authors","published","published_parsed","tags","id","guidislink","summary"]
@@ -182,7 +184,6 @@ def scrape_reviews(appid):
             cursor = reviews["cursor"]
 
             params["cursor"] = cursor.encode()
-            have_cursor = True
         except:
             have_cursor = False
 
@@ -203,46 +204,21 @@ def scrape_appdetails(appids):
         app_detail["tags"] = [app_detail["tags"]]
         list_appdetails.append(app_detail)
     return pd.DataFrame(list_appdetails)
-# def scrape_appdetails(appids):
-#     params = {'format' : 'json',
-#          "filters":"basic,categories,genres,platforms,release_date"}
-#     appdetails_list = []
-#     for appid in appids:
-#         params["appids"] = appid
-#         try:
-#             appdetail = get_request("http://store.steampowered.com/api/appdetails/",params=params)[appid]["data"]
-#         except:
-#             print("App details not available.")
-#             continue
-
-#         if appdetail["type"] != "game":
-#             print("This app is not a game.")
-#             continue
-#         try:
-#             platforms = appdetail.pop("platforms")
-#             release_date = appdetail.pop("release_date")
-#             genres = appdetail.pop("genres")
-#             categories = appdetail.pop("categories")
-#         except:
-#             print("Certain app details missing...skipping...")
-#             continue
-
-#         categories = {"categories":[x["description"] for x in categories]}
-#         genres = {"genres":[x["description"] for x in genres]}
-#         appdetail.update(release_date)
-#         appdetail.update(genres)
-#         appdetail.update(categories)
-#         appdetail.update(platforms)
-#         appdetail.update({"appids":appid})
-        
-#         appdetails_list += [appdetail]
-        
-#     return pd.DataFrame(appdetails_list)
 
 
 def get_unique_appids(game_articles):
-    DATA_PATH = '/opt/airflow/data/'
-    DATE_NOW = datetime.now().strftime("%Y-%m-%d")
     non_null_appids = game_articles[game_articles["appids"].notnull()]
     appids = non_null_appids["appids"].unique()
     return appids
+
+def analyze_sentiment(sentence):
+    sid_obj = SentimentIntensityAnalyzer()
+    return sid_obj.polarity_scores(sentence)
+
+def label_polarity(polarity):
+    if polarity>=0.05:
+        return "positive"
+    elif polarity <=-0.05:
+        return "negative"
+    else:
+        return "neutral"
