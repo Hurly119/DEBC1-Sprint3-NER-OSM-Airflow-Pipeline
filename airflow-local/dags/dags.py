@@ -272,7 +272,9 @@ with DAG(
         dag=dag
     )
 
-    t1 >> [indigames_plus_feed()] >> combine_all_articles() >> \
+    t1 >> [indigames_plus_feed(),kotaku_feed(),escapist_mag_feed(),
+    eurogamer_feed(),ps_blog_feed(),gamespot_feed(),steam_news_feed(),rock_paper_sg_feed(),
+    ancient_gaming_feed()] >> combine_all_articles() >> \
     t1_end >> [scrape_game_details(),scrape_game_reviews()] \
     >> t2_end >> [sentiment_analysis(),spacy_ner(),word_count()] >> t3_end
     # combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
