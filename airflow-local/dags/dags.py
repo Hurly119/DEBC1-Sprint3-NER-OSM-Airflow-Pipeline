@@ -84,7 +84,7 @@ def combine_all_articles(ds=None,**kwargs):
     files = os.listdir(f"{DATA_PATH}articles")
     dfs = []
     for file in files:
-        outfile = f"{DATA_PATH}{file}"
+        outfile = f"{DATA_PATH}articles/{file}"
         if not outfile.endswith('.csv'):
             continue
         df = pd.read_csv(outfile)
