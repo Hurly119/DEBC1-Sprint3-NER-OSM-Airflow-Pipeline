@@ -135,9 +135,9 @@ def upload_formatted_rss_feed(feed_name, feed):
     df = df[columns]
     df["source"] = feed_name
     df = df_appids(df,feed_name)
-    time_now = datetime.now().strftime('%Y-%m-%d_%I-%M-%S')
+    time_now = datetime.now().strftime('%Y-%m-%d')
     filename = feed_name + '_' + time_now + '.csv'
-    df.to_csv(f"{DATA_PATH}{filename}", index=False)
+    df.to_csv(f"{DATA_PATH}articles/{filename}", index=False)
     print(f"df {filename} saved to .csv!")
 
 def df_appids(df2,feed_name):
