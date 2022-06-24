@@ -167,6 +167,5 @@ with DAG(
         dag=dag
     )
 
-    t1 >> combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
-    # [kotaku_feed(),indigames_plus_feed()] >> 
+    t1 >> [kotaku_feed(),indigames_plus_feed()] >> combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
     # combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
