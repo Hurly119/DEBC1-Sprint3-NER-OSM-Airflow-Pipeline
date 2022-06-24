@@ -274,6 +274,5 @@ with DAG(
 
     t1 >> [indigames_plus_feed()] >> combine_all_articles() >> \
     t1_end >> [scrape_game_details(),scrape_game_reviews()] \
-    >> t2_end 
-    # >> [sentiment_analysis(),spacy_ner(),word_count()] >> t3_end
+    >> t2_end >> [sentiment_analysis(),spacy_ner(),word_count()] >> t3_end
     # combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
