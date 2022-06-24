@@ -157,4 +157,11 @@ with DAG(
         dag=dag
     )
 
-    t1 >> [kotaku_feed(),indigames_plus_feed()] >> [scrape_game_details(),scrape_game_reviews()] >> t1_end
+    t2_end = BashOperator(
+        task_id="t2_end_msg",
+        bash_command = "echo 't1_end'",
+        # bash_command="curl -X POST -H 'Content-type: application/json' --data '{\"text\" : \"ending task 1: scraping\"}' \"https://discord.com/api/webhooks/986224448984195082/pQp4GNcVWh-J2XtmIycVnjxYuGRGVIYFeveDRS5EwvgmGozthyd_alj8wbeKhfVn9SSk/slack\"",
+        dag=dag
+    )
+
+    t1 >> [kotaku_feed(),indigames_plus_feed()] >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end

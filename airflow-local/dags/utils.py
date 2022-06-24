@@ -28,7 +28,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import time
 import random
 
-MY_API_KEY = '5B3F9E5908006B10BDECF51F9A9A5A95'
+MY_API_KEY = Variable.get("STEAM_API_KEY")
 
 def get_request(url,params=None):
     
@@ -93,8 +93,12 @@ def init_appids(df):
                 continue
         except:
             pass
-
-        ls_tag = eval(tag)
+        ls_tag = None
+        try:
+            ls_tag = eval(tag)
+        except:
+            ls_tag = tag
+            
         for term in ls_tag:
             game_name = term["term"]
             appid = get_appid(game_name)
@@ -134,7 +138,7 @@ def upload_formatted_rss_feed(feed_name, feed):
     DATA_PATH = '/opt/airflow/data/'
     feed = feedparser.parse(feed)
     df = pd.DataFrame(feed['entries'])
-    columns = ["title","title_detail","link","links","author","authors","published","published_parsed","tags","id","guidislink","summary","website_name"]
+    columns = ["title","title_detail","link","links","author","authors","published","published_parsed","tags","id","guidislink","summary"]
     df = df[columns]
     df["source"] = feed_name
     df = df_appids(df,feed_name)
