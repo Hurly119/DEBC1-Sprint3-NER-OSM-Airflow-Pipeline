@@ -156,3 +156,76 @@ def df_appids(df2,feed_name):
     df.loc[df["appids"].isnull(),"appids"]= df.loc[df["appids"].isnull(),"nouns"].apply(init_null_appids)
     print(f"appids for {feed_name} initialized!")
     return df
+
+def reviews_json_to_df(review_response,appid):
+    all_reviews = []
+    for review in review_response["reviews"]:
+        author_data = review.pop("author")
+        review.update(author_data)
+        review.update({"appids":appid})
+        all_reviews.append(review)
+    return all_reviews
+
+def scrape_reviews(appid):
+    params = {'json' : 1,
+        'filter' : 'all',
+        'language' : 'english',
+        'review_type' : 'all',
+        'purchase_type' : 'all',
+        'day_range':1}
+
+    cursor = False
+    explored_cursors = []
+    reviews_list = []
+
+    while cursor not in explored_cursors:
+        explored_cursors.append(cursor)
+
+        reviews = get_request(f"https://store.steampowered.com/appreviews/{appid}",params=params)
+        cursor = reviews["cursor"]
+
+        params["cursor"] = cursor.encode()
+        params["num_per_page"] = 100
+        print("review count:",len(reviews_list))
+        print(params["cursor"])
+        print()
+        reviews_list += reviews_json_to_df(reviews,appid)
+    return reviews_list
+
+def scrape_appdetails(appids):
+    params = {'format' : 'json',
+          "key":Variable.get("STEAM_API_KEY"),
+         "filters":"basic,categories,genres,platforms,release_date"}
+    appdetails_list = []
+    for appid in appids:
+        
+        params["appids"] = appid
+        try:
+            appdetail = get_request("http://store.steampowered.com/api/appdetails/",params=params)[appid]["data"]
+        except:
+            print("App details not available.")
+            continue
+
+        if appdetail["type"] != "game":
+            print("This app is not a game.")
+            continue
+        try:
+            platforms = appdetail.pop("platforms")
+            release_date = appdetail.pop("release_date")
+            genres = appdetail.pop("genres")
+            categories = appdetail.pop("categories")
+        except:
+            print("Certain app details missing...skipping...")
+            continue
+
+        categories = {"categories":[x["description"] for x in categories]}
+        genres = {"genres":[x["description"] for x in genres]}
+        appdetail.update(release_date)
+        appdetail.update(genres)
+        appdetail.update(categories)
+        appdetail.update(platforms)
+        appdetail.update({"appids":appid})
+        
+        appdetails_list += [appdetail]
+        
+    return pd.DataFrame(appdetails_list)
