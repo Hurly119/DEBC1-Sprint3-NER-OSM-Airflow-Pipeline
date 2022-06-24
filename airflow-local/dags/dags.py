@@ -131,8 +131,8 @@ def word_count(ds=None, **kwargs):
         return word_dict
 
 
-    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.CSV"
-    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.CSV"
+    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.csv"
+    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.csv"
 
     game_articles = pd.read_csv(game_article_filename)
     game_reviews = pd.read_csv(game_reviews_filename)
@@ -158,8 +158,8 @@ def word_count(ds=None, **kwargs):
     print()
 @task(task_id='sentiment_analysis')
 def sentiment_analysis(ds=None,**kwargs):
-    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.CSV"
-    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.CSV"
+    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.csv"
+    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.csv"
 
     game_articles = pd.read_csv(game_article_filename)
     game_reviews = pd.read_csv(game_reviews_filename)
@@ -192,8 +192,8 @@ def spacy_ner(ds=None, **kwargs):
             print(entity.text, entity.label_)
         return ner
 
-    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.CSV"
-    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.CSV"
+    game_article_filename = f"{DATA_PATH}game_articles_{DATE_NOW}.csv"
+    game_reviews_filename = f"{DATA_PATH}game_reviews_{DATE_NOW}.csv"
 
     game_articles = pd.read_csv(game_article_filename)
     game_reviews = pd.read_csv(game_reviews_filename)
