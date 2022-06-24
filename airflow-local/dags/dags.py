@@ -26,7 +26,7 @@ nltk.download('stopwords')
 from nltk.corpus import stopwords
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from utils import upload_formatted_rss_feed,scrape_reviews,scrape_appdetails
+from utils import upload_formatted_rss_feed,scrape_reviews,scrape_appdetails,get_unique_appids
 
 BUCKET_NAME = "news_sites"
 
@@ -92,24 +92,27 @@ def combine_all_articles(ds=None,**kwargs):
 
 @task(task_id="scrape_game_reviews")
 def scrape_game_reviews(ds=None,**kwargs):
-    appids = pd.read_csv(f"{DATA_PATH}game_articles_{DATE_NOW}.csv")["appids"].unique()
+    game_articles = pd.read_csv(f"{DATA_PATH}game_articles_{DATE_NOW}.csv")
+    appids = get_unique_appids(game_articles)
+
     all_reviews = []
     for appid in appids:
         reviews_list = scrape_reviews(appid)
         all_reviews += reviews_list
     game_reviews = pd.DataFrame(all_reviews)
 
-    game_reviews.to_csv("f{DATA_PATH}game_reviews_{DATE_NOW}.csv")
+    game_reviews.to_csv(f"{DATA_PATH}game_reviews_{DATE_NOW}.csv")
 
 @task(task_id="scrape_game_details")
 def scrape_game_details(ds=None,**kwargs):
-    appids = pd.read_csv(f"{DATA_PATH}game_articles_{DATE_NOW}.csv")["appids"].unique()
+    game_articles = pd.read_csv(f"{DATA_PATH}game_articles_{DATE_NOW}.csv")
+    appids = get_unique_appids(game_articles)
     
     lst_game_details = scrape_appdetails(appids)
     
     game_details = pd.DataFrame(lst_game_details)
 
-    game_details.to_csv("f{DATA_PATH}game_details_{DATE_NOW}.csv")
+    game_details.to_csv(f"{DATA_PATH}game_details_{DATE_NOW}.csv")
 
 
 with DAG(
@@ -164,4 +167,6 @@ with DAG(
         dag=dag
     )
 
-    t1 >> [kotaku_feed(),indigames_plus_feed()] >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
+    t1 >> combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end
+    # [kotaku_feed(),indigames_plus_feed()] >> 
+    # combine_all_articles() >> t1_end >> [scrape_game_details(),scrape_game_reviews()] >> t2_end

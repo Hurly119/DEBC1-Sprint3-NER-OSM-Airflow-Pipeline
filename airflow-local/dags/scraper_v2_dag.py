@@ -148,8 +148,6 @@ def word_count(ds=None, **kwargs):
 
 @task(task_id='sentiment_analysis')
 def sentiment_analysis(ds=None,**kwargs):
-    stop_words = stopwords.words("english")
-
     files = os.listdir(DATA_PATH)
 
     for file in files:

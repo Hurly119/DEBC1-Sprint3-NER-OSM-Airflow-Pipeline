@@ -30,33 +30,24 @@ import random
 
 MY_API_KEY = Variable.get("STEAM_API_KEY")
 
-def get_request(url,params=None):
-    
+def get_request(url,params=None,retries=0):
     sleep_time = random.randint(1,10)
+    if retries >3:
+        print("Failed to get response cancelling...,")
+        return None
     try:
         response = requests.get(url=url,params=params)
-    except requests.exceptions.HTTPError as errh:
-        print ("Http Error:",errh)
-        time.sleep(sleep_time)
-        return get_request(url,params)
-    except requests.exceptions.ConnectionError as errc:
-        print ("Error Connecting:",errc)
-        time.sleep(sleep_time)
-        return get_request(url,params)
-    except requests.exceptions.Timeout as errt:
-        print ("Timeout Error:",errt)
-        time.sleep(sleep_time)
-        return get_request(url,params)
     except Exception as e:
-        print("Failed to get response cancelling...,",e)
-        return 
+        retries +=1
+        return get_request(url,params,retries)
         
     if response:
         return response.json()
     else:
         print("No Response. Retrying...")
         time.sleep(sleep_time)
-        return get_request(url,params)
+        retries+=1
+        return get_request(url,params,retries)
 
 ##initialize dfs
 def get_appid(game_name):
@@ -98,7 +89,7 @@ def init_appids(df):
             ls_tag = eval(tag)
         except:
             ls_tag = tag
-            
+
         for term in ls_tag:
             game_name = term["term"]
             appid = get_appid(game_name)
@@ -163,6 +154,7 @@ def df_appids(df2,feed_name):
 
 def reviews_json_to_df(review_response,appid):
     all_reviews = []
+    print(review_response)
     for review in review_response["reviews"]:
         author_data = review.pop("author")
         review.update(author_data)
@@ -184,52 +176,73 @@ def scrape_reviews(appid):
 
     while cursor not in explored_cursors:
         explored_cursors.append(cursor)
-
+        have_cursor = True
         reviews = get_request(f"https://store.steampowered.com/appreviews/{appid}",params=params)
-        cursor = reviews["cursor"]
+        try:
+            cursor = reviews["cursor"]
 
-        params["cursor"] = cursor.encode()
+            params["cursor"] = cursor.encode()
+            have_cursor = True
+        except:
+            have_cursor = False
+
         params["num_per_page"] = 100
         print("review count:",len(reviews_list))
-        print(params["cursor"])
         print()
         reviews_list += reviews_json_to_df(reviews,appid)
+
+        if not have_cursor: break
     return reviews_list
 
+# def scrape_appdetails(appids):
 def scrape_appdetails(appids):
-    params = {'format' : 'json',
-          "key":Variable.get("STEAM_API_KEY"),
-         "filters":"basic,categories,genres,platforms,release_date"}
-    appdetails_list = []
+    list_appdetails = []
     for appid in appids:
-        
-        params["appids"] = appid
-        try:
-            appdetail = get_request("http://store.steampowered.com/api/appdetails/",params=params)[appid]["data"]
-        except:
-            print("App details not available.")
-            continue
+        print(f"getting appdetails for: {appid}")
+        app_detail = get_request(f"https://steamspy.com/api.php?request=appdetails&appid={appid}")
+        app_detail["tags"] = [app_detail["tags"]]
+        list_appdetails.append(app_detail)
+    return pd.DataFrame(list_appdetails)
+# def scrape_appdetails(appids):
+#     params = {'format' : 'json',
+#          "filters":"basic,categories,genres,platforms,release_date"}
+#     appdetails_list = []
+#     for appid in appids:
+#         params["appids"] = appid
+#         try:
+#             appdetail = get_request("http://store.steampowered.com/api/appdetails/",params=params)[appid]["data"]
+#         except:
+#             print("App details not available.")
+#             continue
 
-        if appdetail["type"] != "game":
-            print("This app is not a game.")
-            continue
-        try:
-            platforms = appdetail.pop("platforms")
-            release_date = appdetail.pop("release_date")
-            genres = appdetail.pop("genres")
-            categories = appdetail.pop("categories")
-        except:
-            print("Certain app details missing...skipping...")
-            continue
+#         if appdetail["type"] != "game":
+#             print("This app is not a game.")
+#             continue
+#         try:
+#             platforms = appdetail.pop("platforms")
+#             release_date = appdetail.pop("release_date")
+#             genres = appdetail.pop("genres")
+#             categories = appdetail.pop("categories")
+#         except:
+#             print("Certain app details missing...skipping...")
+#             continue
 
-        categories = {"categories":[x["description"] for x in categories]}
-        genres = {"genres":[x["description"] for x in genres]}
-        appdetail.update(release_date)
-        appdetail.update(genres)
-        appdetail.update(categories)
-        appdetail.update(platforms)
-        appdetail.update({"appids":appid})
+#         categories = {"categories":[x["description"] for x in categories]}
+#         genres = {"genres":[x["description"] for x in genres]}
+#         appdetail.update(release_date)
+#         appdetail.update(genres)
+#         appdetail.update(categories)
+#         appdetail.update(platforms)
+#         appdetail.update({"appids":appid})
         
-        appdetails_list += [appdetail]
+#         appdetails_list += [appdetail]
         
-    return pd.DataFrame(appdetails_list)
+#     return pd.DataFrame(appdetails_list)
+
+
+def get_unique_appids(game_articles):
+    DATA_PATH = '/opt/airflow/data/'
+    DATE_NOW = datetime.now().strftime("%Y-%m-%d")
+    non_null_appids = game_articles[game_articles["appids"].notnull()]
+    appids = non_null_appids["appids"].unique()
+    return appids
